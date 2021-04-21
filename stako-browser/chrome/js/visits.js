@@ -15,6 +15,7 @@ function init_visits() {
             fetch(request)
             .then(response => response.text())
             .then(data => {
+                //console.log(data);
                 fill_up_data(data);
             })
         }
@@ -33,21 +34,54 @@ function fill_up_data(activity_data) {
         console.log(current_date);
         let dateHTML = ""
         let count = 0;
-        acts.forEach(element =>{
+        var currDay = new Date();
+        const milliInDay = 1000*3600*24;
+        var slide = document.createElement("div");
+        acts.forEach(element => {
+            console.log(element);
+            console.log(currDay);
+            console.log(current_date);
             let date = timestampToDate(element.timestamp);
+            if((currDay - new Date(current_date))/milliInDay >= 6.9 ) {
+                addWeekToCarousel(slide);
+                dateHTML = ""
+                slide = document.createElement("div");
+                currDay = new Date(current_date);
+            }
             if(date.toDateString() == current_date) {
                 dateHTML += getEntryHTML(date, element.url);
             } else {
-                addToAccordion(dateHTML, ++count, current_date);
+                var accord = document.createElement("div");
+                accord.innerHTML = getAccordionCard(dateHTML, ++count, current_date);
+                slide.appendChild(accord);
+                //addToAccordion(dateHTML, ++count, current_date);
                 current_date = date.toDateString();
                 dateHTML = getEntryHTML(date, element.url);
             }
         });
-        addToAccordion(dateHTML, ++count, current_date);
+        if(dateHTML !== "") {
+            var accord = document.createElement("div");
+            accord.innerHTML = getAccordionCard(dateHTML, ++count, current_date);
+            slide.appendChild(accord);
+            addWeekToCarousel(slide);
+        }
+        //addToAccordion(dateHTML, ++count, current_date);
     } else {
         $('#visits_data').html('<b>There is no logged activity for this week.</b>')
     }
 }
+
+function addWeekToCarousel(accordian) {
+    var carouselContainer = document.querySelector("#carouselContent > .carousel-inner");
+    var slide = document.createElement("div");
+    if(carouselContainer.firstElementChild === null) {
+        slide.classList.add("active");
+    }
+    slide.classList.add("carousel-item", "text-center", "p-4");
+    slide.append(accordian);
+    carouselContainer.append(slide);
+}
+
 
 function getEntryHTML(visit_date, visit_url) {
     return '<li>(' + getFullTime(visit_date) + ') ' + visit_url + '</li>'
